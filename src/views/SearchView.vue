@@ -1,0 +1,3 @@
+<template>
+    Search View
+</template>

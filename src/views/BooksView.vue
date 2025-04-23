@@ -1,0 +1,3 @@
+<template>
+    Books View
+</template>
