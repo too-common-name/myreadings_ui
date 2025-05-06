@@ -7,12 +7,13 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 import '@mdi/font/css/materialdesignicons.css' 
+import { register } from 'swiper/element/bundle';
 
 import { createApp } from 'vue'
 import App from './App.vue'
 import initRouter from './router'
 
-
+register();
 const initApp = async () => {
     const app = createApp(App)
   

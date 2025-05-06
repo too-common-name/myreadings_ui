@@ -19,7 +19,6 @@ const selected = ref(0)
 const menuItems = [
     { icon: 'mdi-home-outline', text: 'Home', path: '/' },
     { icon: 'mdi-book-open-outline', text: 'Books', path: '/books' },
-    { icon: 'mdi-compass-outline', text: 'Discover', path: '/discover' },
     { icon: 'mdi-magnify', text: 'Search', path: '/search' },
     { icon: 'mdi-account-outline', text: 'Profile', path: '/profile' }
 ]

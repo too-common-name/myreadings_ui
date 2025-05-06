@@ -5,6 +5,17 @@ import BottomNavigation from './components/BottomNavigation.vue';
 
 <template>
   <v-app>
+    <v-app-bar
+        app
+        color="surface" 
+        density="compact"
+        elevation="1">
+        <v-app-bar-title
+          class="text-center text-green font-weight-bold"
+        >
+          my readings </v-app-bar-title>
+      </v-app-bar>
+
     <v-main>
       <router-view />
     </v-main>
