@@ -2,7 +2,7 @@
   <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)"
     :fullscreen="display.xs.value" max-width="700px">
     <v-card v-if="book" class="d-flex flex-column h-100 book-details-card">
-      
+
       <!-- Toolbar for mobile -->
       <v-toolbar color="primary" dark v-if="display.xs.value">
         <v-btn icon dark @click="handleClose">
@@ -27,62 +27,38 @@
                 class="mb-4 rounded elevation-2 mx-auto" />
             </v-col>
             <v-col cols="12" :md="display.xs.value ? 12 : 8">
-              <p class="text-body-2 mb-2"><strong>Genre:</strong> {{ book.genre || 'N/A' }}</p>
-              <p class="text-body-2 mb-2"><strong>Publisher:</strong> {{ book.publisher || 'N/A' }}</p>
-              <p class="text-body-2 mb-2"><strong>Publication Date:</strong> {{ formattedPublicationDate }}</p>
-              <p class="text-body-2 mb-2"><strong>ISBN:</strong> {{ book.isbn || 'N/A' }}</p>
-              <p class="text-body-2 mb-2"><strong>Pages:</strong> {{ book.pageCount || 'N/A' }}</p>
-              <p class="text-body-2 mb-2"><strong>Original Language:</strong> {{ book.originalLanguage || 'N/A' }}</p>
-
-              <div class="mt-4">
-                <p class="text-body-2 mb-1"><strong>Description:</strong></p>
-                <p class="text-body-2" style="white-space: pre-wrap;">
-                  {{ book.description || 'No description available.' }}
-                </p>
-              </div>
-            </v-col>
-          </v-row>
-
-          <v-divider class="my-4" />
-
-          <v-row>
-            <v-col cols="12">
-              <h4 class="mb-2">Reviews Overview</h4>
-              <div class="d-flex align-center">
-                <p class="text-body-2 mb-0 me-2">Average Rating:</p>
-                <v-rating
-                  :model-value="reviewStats?.averageRating ?? 0"
-                  length="5"
-                  size="24"
-                  active-color="primary"
-                  readonly
-                  half-increments
-                  density="compact"
-                />
+              <h3 class="text-h5 text-center font-weight-bold">{{ book.title }}</h3>
+              <p class="text-subtitle-1 text-center">{{ book.publisher || 'N/A' }}</p>
+              <div class="d-flex align-center justify-center">
+                <v-rating :model-value="reviewStats?.averageRating ?? 0" length="5" size="24" active-color="primary"
+                  readonly half-increments density="compact" />
                 <span class="text-body-2 ms-2">
                   ({{ reviewStats?.averageRating?.toFixed(1) || 'N/A' }})
                 </span>
               </div>
-              <p class="text-body-2">Total reviews: {{ reviewStats?.totalReviews }}</p>
+              <p class="text-body-2 text-center text-subtitle-2 text-grey-darken-2">{{ reviewStats?.totalReviews }}
+                reviews</p>
             </v-col>
-          </v-row>
-
-          <v-divider class="my-4" />
-
-          <v-row justify="center">
             <v-col cols="12" md="6" class="selection-container">
               <ReadingListSelectBox :items="selectOptions" v-model="selectedReadingListId" />
+              <div class="d-flex align-center justify-center mt-2">
+                <v-rating :model-value="rating" @update:model-value="handleRatingChange" length="5" size="32" hover
+                  active-color="primary" />
+              </div>
             </v-col>
-            <v-col cols="12" md="6" class="rate-container">
-              <h4 class="mb-2">Rate this Book</h4>
-              <v-rating
-                :model-value="rating"
-                @update:model-value="handleRatingChange"
-                length="5"
-                size="32"
-                hover
-                active-color="primary"
-              />
+          </v-row>
+          <v-row>
+            <v-col cols="12">
+                <p class="text-body-2 font-weight-bold" style="white-space: pre-wrap;">
+                  {{ book.description || 'No description available.' }}
+                </p>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12">
+              <p class="text-subtitle-2 text-grey-darken-2">Genre: {{ book.genre || 'N/A' }}</p>
+              <p class="text-subtitle-2 text-grey-darken-2">{{ book.pageCount || 'N/A' }} pages</p>
+              <p class="text-subtitle-2 text-grey-darken-2">First published on {{ formattedPublicationDate }}</p>
             </v-col>
           </v-row>
         </v-container>
@@ -180,7 +156,7 @@ const handleConfirm = () => {
 </script>
 
 <style scoped>
-.v-dialog > .v-overlay__content > .v-card {
+.v-dialog>.v-overlay__content>.v-card {
   overflow-y: hidden;
 }
 

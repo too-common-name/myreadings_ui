@@ -8,6 +8,8 @@
     density="compact"
     label="Add to reading list"
     @update:modelValue="handleSelection"
+    rounded
+    :hide-details="true"
   ></v-select>
 </template>
 
