@@ -1,3 +1,5 @@
+import type { ReviewStats } from "./ReviewStats";
+
 export interface Book {
     bookId: string;
     coverImageId: string;
@@ -9,4 +11,12 @@ export interface Book {
     publisher: string;
     title: string;
     genre: string;
+}
+
+export interface BookWithUserRating extends Book {
+  userRating?: number;
+  readingListId?: string | null;
+  reviewStats?: ReviewStats | null;
+  userReviewId?: string | null;
+  reviewText?: string | null;
 }

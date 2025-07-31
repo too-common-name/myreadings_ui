@@ -18,8 +18,8 @@ const initRouter = () => createRouter({
       component: ProfileView,
     },
     {
-      path: '/books',
-      name: 'books',
+      path: '/collections',
+      name: 'collections',
       component: BooksView,
     },
     {
