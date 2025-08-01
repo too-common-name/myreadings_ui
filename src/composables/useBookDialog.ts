@@ -62,10 +62,16 @@ export function useBookDialog() {
 
     if (payload.selectedListId !== undefined && payload.selectedListId !== bookReadingListIdForSelectedBook.value) {
       try {
-        await instance.put(`/api/v1/readinglists/books/${payload.bookId}/move`, {
-          sourceListId: bookReadingListIdForSelectedBook.value,
-          targetListId: payload.selectedListId
-        });
+        if (bookReadingListIdForSelectedBook.value) {
+            await instance.put(`/api/v1/readinglists/books/${payload.bookId}/move`, {
+                sourceListId: bookReadingListIdForSelectedBook.value,
+                targetListId: payload.selectedListId
+            });
+        } else {
+            await instance.post(`/api/v1/readinglists/${payload.selectedListId}/books`, {
+                bookId: payload.bookId
+            });
+        }
         needsDialogRefresh = true;
         if (onBookMoved) {
           await onBookMoved();

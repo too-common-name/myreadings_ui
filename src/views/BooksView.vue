@@ -135,7 +135,7 @@ import { useBookDataFetcher } from '@/composables/useBookDataFetcher';
 import BookDialog from '@/components/BookDialog.vue';
 import CreateReadingListDialog from '@/components/CreateReadingListDialog.vue';
 import { useBookDialog } from '@/composables/useBookDialog';
-import { getCoverUrl } from '@/utils/coverUtils'; // Importa la funzione generalizzata
+import { getCoverUrl } from '@/utils/coverUtils';
 
 const display = useDisplay();
 

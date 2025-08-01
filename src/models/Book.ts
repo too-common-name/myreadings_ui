@@ -7,7 +7,7 @@ export interface Book {
     isbn: string;
     originalLanguage: string;
     pageCount: number;
-    publicationDate: string; // Date can be used but requires deserialization
+    publicationDate: string;
     publisher: string;
     title: string;
     genre: string;

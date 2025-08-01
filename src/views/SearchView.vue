@@ -70,11 +70,11 @@
                   class="rounded mr-4"
                 ></v-img>
               </template>
-              <v-list-item-content>
+              <v-list-item>
                 <v-list-item-title class="font-weight-bold">{{ book.title }}</v-list-item-title>
                 <v-list-item-subtitle>{{ book.publisher || 'N/A' }}</v-list-item-subtitle>
                 
-              </v-list-item-content>
+              </v-list-item>
             </v-list-item>
             <v-divider v-if="index < searchResults.length - 1"></v-divider>
           </template>
@@ -89,6 +89,7 @@
           :length="totalPages"
           :total-visible="display.xs.value ? 5 : 7"
           rounded="circle"
+          color="primary"
           @update:model-value="onPageChange"
         ></v-pagination>
       </v-col>

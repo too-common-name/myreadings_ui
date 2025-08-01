@@ -11,7 +11,7 @@ import BottomNavigation from './components/BottomNavigation.vue';
         density="compact"
         elevation="1">
         <v-app-bar-title
-          class="text-center text-green font-weight-bold"
+          class="text-center text-primary font-weight-bold"
         >
           my readings </v-app-bar-title>
       </v-app-bar>

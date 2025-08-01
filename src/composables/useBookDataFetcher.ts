@@ -1,9 +1,19 @@
 import instance from '@/utils/axiosInstance';
 import type { ReadingList } from '@/models/ReadingList';
 import type { ReviewStats } from '@/models/ReviewStats';
+import type { Book } from '@/models/Book';
 
 export function useBookDataFetcher() {
-  
+  async function fetchBookBaseInfo(bookId: string): Promise<Book | null> {
+    try {
+      const response = await instance.get(`/api/v1/books/${bookId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching base book info for ${bookId}:`, error);
+      return null;
+    }
+  }
+
   async function fetchBookReadingList(bookId: string): Promise<ReadingList | null> {
     try {
       const res = await instance.get(`/api/v1/readinglists/books/${bookId}/in-my-list`);
@@ -42,6 +52,7 @@ export function useBookDataFetcher() {
   }
 
   return {
+    fetchBookBaseInfo,
     fetchBookReadingList,
     fetchReviewStatsData,
     fetchMyReviewForBook,
