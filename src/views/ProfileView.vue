@@ -223,7 +223,7 @@ onMounted(() => {
 }
 
 .initial-letter.letter-1 {
-    animation: bounce-with-pause 10s infinite;
+    animation: bounce-with-pause 5s infinite;
 }
 
 @keyframes bounce-with-pause {

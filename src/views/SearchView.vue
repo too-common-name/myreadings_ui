@@ -229,9 +229,6 @@ const confirmBookDialogChanges = async (payload: { bookId: string, newRating?: n
             readingListId: updatedBook.readingListId
         });
       }
-    },
-    async () => {
-      await performSearch();
     }
   );
 };
