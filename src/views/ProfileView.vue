@@ -77,6 +77,9 @@ import instance from '@/utils/axiosInstance';
 import { useBookDataFetcher } from '@/composables/useBookDataFetcher';
 import type { ReadingList } from '@/models/ReadingList';
 import type { UiTheme } from '@/models/UiTheme';
+import { useKeycloak } from '@josempgon/vue-keycloak';
+
+const { keycloak } = useKeycloak();
 
 interface UserResponseDTO {
     userId: string;
@@ -108,7 +111,7 @@ const loadingReadingLists = ref(false);
 const errorFetchingReadingLists = ref(false);
 
 
-const currentUserId = ref('9f30865f-4438-40d5-8fe7-0abc0ec3dbc1');
+const currentUserId = computed(() => keycloak.value?.subject);
 
 const {
     fetchBookBaseInfo

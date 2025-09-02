@@ -240,7 +240,11 @@ const confirmBookDialogChanges = async (payload: { bookId: string, newRating?: n
         (updatedBook) => {
             const index = booksInCollection.value.findIndex(b => b.bookId === updatedBook.bookId);
             if (index !== -1) {
-                Object.assign(booksInCollection.value[index], updatedBook);
+                const bookToUpdate = booksInCollection.value[index];
+                bookToUpdate.userRating = updatedBook.userRating;
+                bookToUpdate.userReviewId = updatedBook.userReviewId;
+                bookToUpdate.reviewText = updatedBook.reviewText;
+                bookToUpdate.reviewStats = updatedBook.reviewStats;
             }
         },
         async () => {
