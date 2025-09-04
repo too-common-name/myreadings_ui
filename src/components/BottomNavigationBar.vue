@@ -11,7 +11,7 @@
     </v-layout>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 
 const selected = ref(0)

@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { RouterView } from 'vue-router';
-import BottomNavigationBar from './components/BottomNavigationBar.vue';
+import BottomNavigationBar from '@/components/BottomNavigationBar.vue';
 import SplashScreen from '@/components/SplashScreen.vue';
 
 const showSplash = ref(true);
