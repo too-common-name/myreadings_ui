@@ -1,5 +1,5 @@
 export interface ReviewStats {
-  bookId: string;
-  totalReviews: number;
-  averageRating: number | null;
+  bookId: string
+  totalReviews: number
+  averageRating: number | null
 }

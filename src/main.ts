@@ -7,13 +7,13 @@ import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 import '@mdi/font/css/materialdesignicons.css'
-import { register } from 'swiper/element/bundle';
+import { register } from 'swiper/element/bundle'
 
 import { createApp } from 'vue'
 import App from './App.vue'
 import initRouter from './router'
 
-register();
+register()
 const initApp = async () => {
   const app = createApp(App)
 
@@ -22,7 +22,7 @@ const initApp = async () => {
       url: import.meta.env.VITE_VUE_APP_KEYCLOAK_URL,
       realm: import.meta.env.VITE_VUE_APP_KEYCLOAK_REALM,
       clientId: import.meta.env.VITE_VUE_APP_KEYCLOAK_CLIENT_ID,
-    }
+    },
   })
 
   const myCustomTheme: ThemeDefinition = {
@@ -36,7 +36,7 @@ const initApp = async () => {
       info: '#2196F3',
       success: '#4CAF50',
       warning: '#FB8C00',
-    }
+    },
   }
 
   const vuetify = createVuetify({
@@ -56,7 +56,6 @@ const initApp = async () => {
     components,
     directives,
   })
-
 
   const router = initRouter()
 

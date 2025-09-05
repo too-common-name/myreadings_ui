@@ -1,5 +1,9 @@
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="emit('update:modelValue', $event)" max-width="500px">
+  <v-dialog
+    :model-value="modelValue"
+    @update:model-value="emit('update:modelValue', $event)"
+    max-width="500px"
+  >
     <v-card>
       <v-card-title class="headline">Create New Reading List</v-card-title>
       <v-card-text>
@@ -7,13 +11,9 @@
           v-model="name"
           label="List Name"
           required
-          :rules="[v => !!v || 'Name is required']"
+          :rules="[(v) => !!v || 'Name is required']"
         ></v-text-field>
-        <v-textarea
-          v-model="description"
-          label="Description (Optional)"
-          rows="3"
-        ></v-textarea>
+        <v-textarea v-model="description" label="Description (Optional)" rows="3"></v-textarea>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -25,25 +25,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 const props = defineProps({
   modelValue: Boolean,
-});
+})
 
-const emit = defineEmits(['update:modelValue', 'create-list']);
+const emit = defineEmits(['update:modelValue', 'create-list'])
 
-const name = ref('');
-const description = ref('');
+const name = ref('')
+const description = ref('')
 
 const handleClose = () => {
-  emit('update:modelValue', false);
-};
+  emit('update:modelValue', false)
+}
 
 const handleCreate = () => {
   if (name.value) {
-    emit('create-list', { name: name.value, description: description.value });
+    emit('create-list', { name: name.value, description: description.value })
   }
-};
+}
 </script>
-

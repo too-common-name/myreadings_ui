@@ -19,7 +19,9 @@
   align-items: center;
   background-color: var(--v-theme-primary);
   z-index: 9999;
-  transition: opacity 0.5s ease-in-out, visibility 0.5s;
+  transition:
+    opacity 0.5s ease-in-out,
+    visibility 0.5s;
 }
 
 .splash-screen.fade-out {
@@ -44,7 +46,8 @@
 }
 
 @keyframes bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {

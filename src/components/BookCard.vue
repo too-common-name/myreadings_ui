@@ -1,9 +1,6 @@
 <template>
   <v-card class="ma-3 book-card-custom" elevation="4" @click="$emit('bookCardClicked')">
-    <v-img
-      :src="coverUrl"
-      :aspect-ratio="2/3" cover class="rounded-t book-cover-img"
-    >
+    <v-img :src="coverUrl" :aspect-ratio="2 / 3" cover class="rounded-t book-cover-img">
       <template #default>
         <v-chip class="ma-2 book-genre-chip" color="yellow-darken-2" size="small" label>
           {{ genre }}
@@ -12,26 +9,24 @@
     </v-img>
 
     <v-card-text class="px-3 pb-2 book-card-content">
-      <div class="font-weight-bold book-title"> 
+      <div class="font-weight-bold book-title">
         {{ title }}
       </div>
-      <div class="text-caption text-grey book-description"> 
+      <div class="text-caption text-grey book-description">
         {{ description }}
       </div>
     </v-card-text>
 
-    <v-spacer></v-spacer> 
-
+    <v-spacer></v-spacer>
   </v-card>
 </template>
 
 <script setup lang="ts">
-
 defineProps({
   genre: String,
   coverUrl: String,
   title: String,
-  description: String
+  description: String,
 })
 
 defineEmits(['bookCardClicked'])
@@ -41,8 +36,8 @@ defineEmits(['bookCardClicked'])
 .book-card-custom {
   display: flex;
   flex-direction: column;
-  height: 100%; 
-  width: 100%; 
+  height: 100%;
+  width: 100%;
 }
 
 .book-cover-img {
@@ -51,15 +46,15 @@ defineEmits(['bookCardClicked'])
 
 .book-card-content {
   flex-grow: 1;
-  display: flex; 
+  display: flex;
   flex-direction: column;
-  justify-content: flex-start; 
+  justify-content: flex-start;
 }
 
 .book-title {
-  word-break: break-word; 
+  word-break: break-word;
   line-height: 1.2;
-  margin-bottom: 4px; 
+  margin-bottom: 4px;
 }
 
 .book-description {

@@ -31,7 +31,6 @@
     </v-row>
 
     <v-row v-else-if="searchResults.length > 0">
-      
       <v-col v-if="!display.xs.value" cols="12">
         <v-row>
           <v-col
@@ -54,7 +53,6 @@
         </v-row>
       </v-col>
 
-      
       <v-col v-else cols="12">
         <v-list>
           <template v-for="(book, index) in searchResults" :key="book.bookId">
@@ -73,7 +71,6 @@
               <v-list-item>
                 <v-list-item-title class="font-weight-bold">{{ book.title }}</v-list-item-title>
                 <v-list-item-subtitle>{{ book.publisher || 'N/A' }}</v-list-item-subtitle>
-                
               </v-list-item>
             </v-list-item>
             <v-divider v-if="index < searchResults.length - 1"></v-divider>
@@ -109,144 +106,141 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
-import instance from '@/utils/axiosInstance';
-import { useDisplay } from 'vuetify';
-import type { Book } from '@/models/Book';
-import type { ReadingList } from '@/models/ReadingList';
-import BookCard from '@/components/BookCard.vue';
-import BookDialog from '@/components/BookDialog.vue';
-import { useBookDataFetcher } from '@/composables/useBookDataFetcher';
-import { useBookDialog } from '@/composables/useBookDialog';
-import { getCoverUrl } from '@/utils/coverUtils';
+import { ref, onMounted, watch } from 'vue'
+import instance from '@/utils/axiosInstance'
+import { useDisplay } from 'vuetify'
+import type { Book } from '@/models/Book'
+import type { ReadingList } from '@/models/ReadingList'
+import BookCard from '@/components/BookCard.vue'
+import BookDialog from '@/components/BookDialog.vue'
+import { useBookDataFetcher } from '@/composables/useBookDataFetcher'
+import { useBookDialog } from '@/composables/useBookDialog'
+import { getCoverUrl } from '@/utils/coverUtils'
 
-const display = useDisplay();
+const display = useDisplay()
 
-const searchQuery = ref('');
-const searchResults = ref<Book[]>([]); 
-const loadingResults = ref(false);
-const hasSearched = ref(false); 
+const searchQuery = ref('')
+const searchResults = ref<Book[]>([])
+const loadingResults = ref(false)
+const hasSearched = ref(false)
 
-const currentPage = ref(1);
-const pageSize = 12; 
-const totalResults = ref(0);
-const totalPages = ref(0);
+const currentPage = ref(1)
+const pageSize = 12
+const totalResults = ref(0)
+const totalPages = ref(0)
 
-const readingLists = ref<ReadingList[]>([]); 
+const readingLists = ref<ReadingList[]>([])
 
 const {
   showBookDetailsDialog,
   selectedBookForDetails,
   userRatingForSelectedBook,
   bookReadingListIdForSelectedBook,
-  openBookDialog, 
+  openBookDialog,
   handleConfirmChanges,
-} = useBookDialog();
+} = useBookDialog()
 
-const {
-  fetchBookReadingList, 
-  fetchReviewStatsData,
-  fetchMyReviewForBook,
-} = useBookDataFetcher();
+const { fetchBookReadingList, fetchReviewStatsData, fetchMyReviewForBook } = useBookDataFetcher()
 
 const performSearch = async () => {
   if (!searchQuery.value.trim()) {
-    searchResults.value = [];
-    hasSearched.value = false;
-    totalResults.value = 0;
-    totalPages.value = 0;
-    return;
+    searchResults.value = []
+    hasSearched.value = false
+    totalResults.value = 0
+    totalPages.value = 0
+    return
   }
-  loadingResults.value = true;
-  hasSearched.value = true;
+  loadingResults.value = true
+  hasSearched.value = true
   try {
     const response = await instance.get('/api/v1/books/search', {
       params: {
         query: searchQuery.value,
-        page: currentPage.value - 1, 
+        page: currentPage.value - 1,
         size: pageSize,
       },
-    });
-    totalResults.value = response.data.totalElements || 0; 
-    totalPages.value = response.data.totalPages || 0; 
-    searchResults.value = response.data.content || []; 
+    })
+    totalResults.value = response.data.totalElements || 0
+    totalPages.value = response.data.totalPages || 0
+    searchResults.value = response.data.content || []
   } catch (error) {
-    console.error('Error fetching search results:', error);
-    searchResults.value = [];
-    totalResults.value = 0;
-    totalPages.value = 0;
+    console.error('Error fetching search results:', error)
+    searchResults.value = []
+    totalResults.value = 0
+    totalPages.value = 0
   } finally {
-    loadingResults.value = false;
+    loadingResults.value = false
   }
-};
+}
 
 const onPageChange = (newPage: number) => {
-  currentPage.value = newPage;
-  performSearch(); 
-};
+  currentPage.value = newPage
+  performSearch()
+}
 
 const clearSearch = () => {
-  searchQuery.value = '';
-  searchResults.value = [];
-  hasSearched.value = false;
-  currentPage.value = 1;
-  totalResults.value = 0;
-  totalPages.value = 0;
-};
+  searchQuery.value = ''
+  searchResults.value = []
+  hasSearched.value = false
+  currentPage.value = 1
+  totalResults.value = 0
+  totalPages.value = 0
+}
 
-async function handleBookClick(book: Book) { 
+async function handleBookClick(book: Book) {
   const [readingList, reviewStats, myReview] = await Promise.all([
     fetchBookReadingList(book.bookId),
     fetchReviewStatsData(book.bookId),
-    fetchMyReviewForBook(book.bookId)
-  ]);
+    fetchMyReviewForBook(book.bookId),
+  ])
 
-  const currentReadingListId = readingList?.readingListId || null;
-  const fetchedReviewStats = reviewStats;
-  const fetchedUserRating = myReview?.rating ?? 0;
-  const fetchedUserReviewId = myReview?.reviewId ?? null;
-  const fetchedReviewText = myReview?.reviewText ?? null;
+  const currentReadingListId = readingList?.readingListId || null
+  const fetchedReviewStats = reviewStats
+  const fetchedUserRating = myReview?.rating ?? 0
+  const fetchedUserReviewId = myReview?.reviewId ?? null
+  const fetchedReviewText = myReview?.reviewText ?? null
 
   await openBookDialog(
-    book, 
+    book,
     fetchedReviewStats,
     fetchedUserRating,
     fetchedUserReviewId,
     fetchedReviewText,
-    currentReadingListId
-  );
+    currentReadingListId,
+  )
 }
 
-const confirmBookDialogChanges = async (payload: { bookId: string, newRating?: number, selectedListId?: string | null }) => {
-  await handleConfirmChanges(
-    payload,
-    (updatedBook) => {
-      const index = searchResults.value.findIndex(b => b.bookId === updatedBook.bookId);
-      if (index !== -1) {
-        Object.assign(searchResults.value[index], {
-            userRating: updatedBook.userRating,
-            reviewStats: updatedBook.reviewStats,
-            readingListId: updatedBook.readingListId
-        });
-      }
+const confirmBookDialogChanges = async (payload: {
+  bookId: string
+  newRating?: number
+  selectedListId?: string | null
+}) => {
+  await handleConfirmChanges(payload, (updatedBook) => {
+    const index = searchResults.value.findIndex((b) => b.bookId === updatedBook.bookId)
+    if (index !== -1) {
+      Object.assign(searchResults.value[index], {
+        userRating: updatedBook.userRating,
+        reviewStats: updatedBook.reviewStats,
+        readingListId: updatedBook.readingListId,
+      })
     }
-  );
-};
+  })
+}
 
 onMounted(async () => {
   try {
-    const listsRes = await instance.get('/api/v1/readinglists');
-    readingLists.value = listsRes.data ?? [];
+    const listsRes = await instance.get('/api/v1/readinglists')
+    readingLists.value = listsRes.data ?? []
   } catch (error) {
-    console.error('Error fetching reading lists for BookDialog:', error);
+    console.error('Error fetching reading lists for BookDialog:', error)
   }
-});
+})
 
 watch(searchQuery, (newQuery, oldQuery) => {
   if (newQuery.trim() !== oldQuery.trim()) {
-    currentPage.value = 1; 
+    currentPage.value = 1
   }
-});
+})
 </script>
 
 <style scoped>
