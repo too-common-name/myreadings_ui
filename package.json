@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3000",
+    "dev": "vite --port 3000 --mode localdev",
     "build": "run-p type-check \"build-only {@}\" --",
+    "build-only:docker": "vite build --mode docker",
+    "build:docker": "run-p type-check \"build-only:docker {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
