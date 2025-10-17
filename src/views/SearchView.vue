@@ -107,20 +107,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import instance from '@/utils/axiosInstance'
 import { useDisplay } from 'vuetify'
-import type { Book } from '@/models/Book'
+import type { Book, BookWithDetails } from '@/models/Book'
 import type { ReadingList } from '@/models/ReadingList'
 import BookCard from '@/components/BookCard.vue'
 import BookDialog from '@/components/BookDialog.vue'
-import { useBookDataFetcher } from '@/composables/useBookDataFetcher'
 import { useBookDialog } from '@/composables/useBookDialog'
 import { getCoverUrl } from '@/utils/coverUtils'
+import { bookService, readingListService, reviewService } from '@/services/serviceFactory'
 
 const display = useDisplay()
 
 const searchQuery = ref('')
-const searchResults = ref<Book[]>([])
+const searchResults = ref<Book[]>([]) // Correct type is Book[]
 const loadingResults = ref(false)
 const hasSearched = ref(false)
 
@@ -140,8 +139,6 @@ const {
   handleConfirmChanges,
 } = useBookDialog()
 
-const { fetchBookReadingList, fetchReviewStatsData, fetchMyReviewForBook } = useBookDataFetcher()
-
 const performSearch = async () => {
   if (!searchQuery.value.trim()) {
     searchResults.value = []
@@ -153,16 +150,14 @@ const performSearch = async () => {
   loadingResults.value = true
   hasSearched.value = true
   try {
-    const response = await instance.get('/api/v1/books/search', {
-      params: {
-        query: searchQuery.value,
-        page: currentPage.value - 1,
-        size: pageSize,
-      },
-    })
-    totalResults.value = response.data.totalElements || 0
-    totalPages.value = response.data.totalPages || 0
-    searchResults.value = response.data.content || []
+    const response = await bookService.searchBooks(
+      searchQuery.value,
+      currentPage.value - 1,
+      pageSize,
+    )
+    totalResults.value = response.totalElements || 0
+    totalPages.value = response.totalPages || 0
+    searchResults.value = response.content || [] // This is correct (assigns Book[])
   } catch (error) {
     console.error('Error fetching search results:', error)
     searchResults.value = []
@@ -188,25 +183,28 @@ const clearSearch = () => {
 }
 
 async function handleBookClick(book: Book) {
-  const [readingList, reviewStats, myReview] = await Promise.all([
-    fetchBookReadingList(book.bookId),
-    fetchReviewStatsData(book.bookId),
-    fetchMyReviewForBook(book.bookId),
+  const [listInfo, stats, myReview] = await Promise.all([
+    readingListService.getReadingListContainingBook(book.bookId),
+    reviewService.getReviewStats(book.bookId),
+    reviewService.getMyReviewForBook(book.bookId),
   ])
 
-  const currentReadingListId = readingList?.readingListId || null
-  const fetchedReviewStats = reviewStats
-  const fetchedUserRating = myReview?.rating ?? 0
-  const fetchedUserReviewId = myReview?.reviewId ?? null
-  const fetchedReviewText = myReview?.reviewText ?? null
+  const bookWithDetails: BookWithDetails = {
+    ...book,
+    reviewStats: stats,
+    userRating: myReview?.rating ?? 0,
+    userReviewId: myReview?.reviewId ?? null,
+    reviewText: myReview?.reviewText ?? null,
+    readingListId: listInfo?.readingListId ?? null,
+  }
 
   await openBookDialog(
-    book,
-    fetchedReviewStats,
-    fetchedUserRating,
-    fetchedUserReviewId,
-    fetchedReviewText,
-    currentReadingListId,
+    bookWithDetails,
+    bookWithDetails.reviewStats,
+    bookWithDetails.userRating,
+    bookWithDetails.userReviewId,
+    bookWithDetails.reviewText,
+    bookWithDetails.readingListId,
   )
 }
 
@@ -215,22 +213,12 @@ const confirmBookDialogChanges = async (payload: {
   newRating?: number
   selectedListId?: string | null
 }) => {
-  await handleConfirmChanges(payload, (updatedBook) => {
-    const index = searchResults.value.findIndex((b) => b.bookId === updatedBook.bookId)
-    if (index !== -1) {
-      Object.assign(searchResults.value[index], {
-        userRating: updatedBook.userRating,
-        reviewStats: updatedBook.reviewStats,
-        readingListId: updatedBook.readingListId,
-      })
-    }
-  })
+  await handleConfirmChanges(payload, () => {})
 }
 
 onMounted(async () => {
   try {
-    const listsRes = await instance.get('/api/v1/readinglists')
-    readingLists.value = listsRes.data ?? []
+    readingLists.value = await readingListService.getMyReadingLists()
   } catch (error) {
     console.error('Error fetching reading lists for BookDialog:', error)
   }
@@ -242,7 +230,6 @@ watch(searchQuery, (newQuery, oldQuery) => {
   }
 })
 </script>
-
 <style scoped>
 .v-text-field {
   max-width: 600px;

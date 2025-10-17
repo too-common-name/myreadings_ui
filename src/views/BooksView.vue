@@ -150,25 +150,23 @@
 <script setup lang="ts">
 
 import { ref, onMounted, computed } from 'vue'
-import instance from '@/utils/axiosInstance'
 import { useDisplay } from 'vuetify'
-import type { Book, BookWithUserRating } from '@/models/Book'
+import type { BookWithDetails } from '@/models/Book'
 import type { ReadingList } from '@/models/ReadingList'
-import { useBookDataFetcher } from '@/composables/useBookDataFetcher'
+import { useBookDialog } from '@/composables/useBookDialog'
 import BookDialog from '@/components/BookDialog.vue'
 import CreateReadingListDialog from '@/components/CreateReadingListDialog.vue'
-import { useBookDialog } from '@/composables/useBookDialog'
 import { getCoverUrl } from '@/utils/coverUtils'
+import { bookService, readingListService } from '@/services/serviceFactory'
 
 const display = useDisplay()
 
 const collections = ref<ReadingList[]>([])
 const selectedCollection = ref<ReadingList | null>(null)
-const booksInCollection = ref<BookWithUserRating[]>([])
+const booksInCollection = ref<BookWithDetails[]>([])
 const loadingCollections = ref(false)
 const loadingBooks = ref(false)
 const viewingCollectionBooks = ref(false)
-
 const showCreateListDialog = ref(false)
 
 const {
@@ -179,8 +177,6 @@ const {
   openBookDialog,
   handleConfirmChanges,
 } = useBookDialog()
-
-const { fetchBookReadingList, fetchReviewStatsData, fetchMyReviewForBook } = useBookDataFetcher()
 
 const desktopHeaders = [
   { title: 'Cover', key: 'cover', sortable: false },
@@ -204,8 +200,7 @@ const mobileHeaderText = computed(() => {
 const fetchCollections = async () => {
   loadingCollections.value = true
   try {
-    const response = await instance.get('/api/v1/readinglists')
-    collections.value = response.data
+    collections.value = await readingListService.getMyReadingLists()
   } catch (error) {
     console.error('Error fetching collections:', error)
   } finally {
@@ -217,26 +212,7 @@ const fetchBooksInCollection = async (readingListId: string) => {
   loadingBooks.value = true
   booksInCollection.value = []
   try {
-    const booksResponse = await instance.get(`/api/v1/readinglists/${readingListId}/books`)
-    const booksData: Book[] = booksResponse.data
-
-    const booksWithDetailsPromises = booksData.map(async (book: Book) => {
-      const readingList = await fetchBookReadingList(book.bookId)
-      const currentReadingListId = readingList?.readingListId || null
-      const reviewStats = await fetchReviewStatsData(book.bookId)
-      const myReview = await fetchMyReviewForBook(book.bookId)
-
-      return {
-        ...book,
-        reviewStats: reviewStats,
-        userRating: myReview?.rating ?? 0,
-        readingListId: currentReadingListId,
-        userReviewId: myReview?.reviewId ?? null,
-        reviewText: myReview?.reviewText ?? null,
-      } as BookWithUserRating
-    })
-
-    booksInCollection.value = await Promise.all(booksWithDetailsPromises)
+    booksInCollection.value = await bookService.getBooksInReadingListWithDetails(readingListId)
   } catch (error) {
     console.error(`Error fetching books for collection ${readingListId}:`, error)
   } finally {
@@ -252,14 +228,14 @@ const handleCollectionClick = async (collection: ReadingList, isMobile: boolean 
   }
 }
 
-async function handleBookClick(book: BookWithUserRating) {
+async function handleBookClick(book: BookWithDetails) {
   await openBookDialog(
     book,
-    book.reviewStats!,
-    book.userRating ?? 0,
-    book.userReviewId ?? null,
-    book.reviewText ?? null,
-    book.readingListId || null,
+    book.reviewStats,
+    book.userRating,
+    book.userReviewId,
+    book.reviewText,
+    book.readingListId,
   )
 }
 
@@ -273,11 +249,7 @@ const confirmBookDialogChanges = async (payload: {
     (updatedBook) => {
       const index = booksInCollection.value.findIndex((b) => b.bookId === updatedBook.bookId)
       if (index !== -1) {
-        const bookToUpdate = booksInCollection.value[index]
-        bookToUpdate.userRating = updatedBook.userRating
-        bookToUpdate.userReviewId = updatedBook.userReviewId
-        bookToUpdate.reviewText = updatedBook.reviewText
-        bookToUpdate.reviewStats = updatedBook.reviewStats
+        Object.assign(booksInCollection.value[index], updatedBook)
       }
     },
     async () => {
@@ -290,8 +262,7 @@ const confirmBookDialogChanges = async (payload: {
 
 const handleCreateList = async (listDetails: { name: string; description: string }) => {
   try {
-    const response = await instance.post('/api/v1/readinglists', listDetails)
-    console.log('List created successfully:', response.data)
+    await readingListService.createReadingList(listDetails)
     showCreateListDialog.value = false
     await fetchCollections()
   } catch (error) {

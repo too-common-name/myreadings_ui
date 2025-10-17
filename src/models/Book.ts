@@ -1,22 +1,33 @@
-import type { ReviewStats } from './ReviewStats'
+import type { ReviewStats } from './Review'
 
 export interface Book {
   bookId: string
-  coverImageId: string
+  title: string
   description: string
   isbn: string
-  originalLanguage: string
-  pageCount: number
-  publicationDate: string
+  authors: string[]
   publisher: string
-  title: string
+  publicationDate: string
+  pageCount: number
   genre: string
+  originalLanguage: string
+  coverImageId: string
 }
 
-export interface BookWithUserRating extends Book {
-  userRating?: number
-  readingListId?: string | null
-  reviewStats?: ReviewStats | null
-  userReviewId?: string | null
-  reviewText?: string | null
+export interface BookWithDetails extends Book {
+  reviewStats: ReviewStats | null
+  userRating: number
+  userReviewId: string | null
+  reviewText: string | null
+  readingListId: string | null
+}
+
+export interface PagedResponse<T> {
+  content: T[]
+  totalPages: number
+  totalElements: number
+  pageNumber: number
+  pageSize: number
+  first: boolean
+  last: boolean
 }

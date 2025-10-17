@@ -7,3 +7,25 @@ export interface Review {
   publicationDate: string
   username: string
 }
+
+export interface ReviewStats {
+  bookId: string
+  totalReviews: number
+  averageRating: number | null
+}
+
+export interface ReviewWithBookTitle {
+  reviewId: string;
+  bookId: string;
+  bookTitle: string;
+  rating: number;
+  publicationDate: string;
+}
+
+export interface ReviewInput {
+  bookId: string
+  reviewId?: string | null
+  rating: number
+  reviewText?: string
+}
+

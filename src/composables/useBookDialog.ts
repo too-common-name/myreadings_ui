@@ -1,11 +1,11 @@
 import { ref } from 'vue'
-import instance from '@/utils/axiosInstance'
-import type { Book, BookWithUserRating } from '@/models/Book'
-import type { ReviewStats } from '@/models/ReviewStats'
+import { reviewService, readingListService } from '@/services/serviceFactory'
+import type { Book, BookWithDetails } from '@/models/Book'
+import type { ReviewStats } from '@/models/Review'
 
 export function useBookDialog() {
   const showBookDetailsDialog = ref(false)
-  const selectedBookForDetails = ref<BookWithUserRating | null>(null)
+  const selectedBookForDetails = ref<BookWithDetails | null>(null)
   const userRatingForSelectedBook = ref(0)
   const bookReadingListIdForSelectedBook = ref<string | null>(null)
 
@@ -24,7 +24,7 @@ export function useBookDialog() {
       readingListId: currentReadingListId,
       userReviewId: fetchedUserReviewId,
       reviewText: fetchedReviewText,
-    } as BookWithUserRating
+    } as BookWithDetails
 
     userRatingForSelectedBook.value = fetchedUserRating
     bookReadingListIdForSelectedBook.value = currentReadingListId
@@ -33,29 +33,22 @@ export function useBookDialog() {
 
   const handleConfirmChanges = async (
     payload: { bookId: string; newRating?: number; selectedListId?: string | null },
-    onBookUpdatedInList?: (updatedBook: BookWithUserRating) => void,
+    onBookUpdatedInList?: (updatedBook: BookWithDetails) => void,
     onBookMoved?: () => Promise<void>,
   ) => {
     let needsDialogRefresh = false
 
     if (payload.newRating !== undefined && payload.newRating !== userRatingForSelectedBook.value) {
       try {
-        const reviewPayload = {
+        const newReview = await reviewService.createOrUpdateReview({
           bookId: payload.bookId,
           rating: payload.newRating,
-          reviewText: selectedBookForDetails.value?.reviewText ?? null,
-        }
+          reviewText: selectedBookForDetails.value?.reviewText ?? undefined,
+          reviewId: selectedBookForDetails.value?.userReviewId ?? null,
+        })
 
-        if (selectedBookForDetails.value?.userReviewId) {
-          await instance.put(
-            `/api/v1/reviews/${selectedBookForDetails.value.userReviewId}`,
-            reviewPayload,
-          )
-        } else {
-          const response = await instance.post(`/api/v1/reviews`, reviewPayload)
-          if (response.data && response.data.reviewId && selectedBookForDetails.value) {
-            selectedBookForDetails.value.userReviewId = response.data.reviewId
-          }
+        if (selectedBookForDetails.value) {
+          selectedBookForDetails.value.userReviewId = newReview.reviewId
         }
         needsDialogRefresh = true
       } catch (error) {
@@ -69,14 +62,13 @@ export function useBookDialog() {
     ) {
       try {
         if (bookReadingListIdForSelectedBook.value) {
-          await instance.put(`/api/v1/readinglists/books/${payload.bookId}/move`, {
-            sourceListId: bookReadingListIdForSelectedBook.value,
-            targetListId: payload.selectedListId,
-          })
+          await readingListService.moveBookBetweenReadingLists(
+            payload.bookId,
+            bookReadingListIdForSelectedBook.value,
+            payload.selectedListId!,
+          ) 
         } else {
-          await instance.post(`/api/v1/readinglists/${payload.selectedListId}/books`, {
-            bookId: payload.bookId,
-          })
+          await readingListService.addBookToReadingList(payload.selectedListId!, payload.bookId)
         }
         needsDialogRefresh = true
         if (onBookMoved) {
@@ -95,7 +87,7 @@ export function useBookDialog() {
       selectedBookForDetails.value.userRating = userRating
       selectedBookForDetails.value.userReviewId = userReviewId
       selectedBookForDetails.value.reviewText = reviewText
-      selectedBookForDetails.value.readingListId = payload.selectedListId
+      selectedBookForDetails.value.readingListId = payload.selectedListId!
 
       userRatingForSelectedBook.value = userRating
       bookReadingListIdForSelectedBook.value = payload.selectedListId!
@@ -114,31 +106,22 @@ export function useBookDialog() {
     let userReviewId: string | null = null
     let reviewText: string | null = null
 
-    try {
-      const statsResponse = await instance.get(`/api/v1/reviews/books/${bookId}/stats`)
-      reviewStats = statsResponse.data
-    } catch (statsError: any) {
-      if (statsError.response && statsError.response.status !== 404) {
-        console.warn(
-          `Could not fetch review stats for book ${bookId}: ${statsError.response.status}`,
-        )
-      }
-    }
+try {
+      const [stats, myReview] = await Promise.all([
+        reviewService.getReviewStats(bookId),
+        reviewService.getMyReviewForBook(bookId),
+      ])
 
-    try {
-      const userReviewResponse = await instance.get(`/api/v1/reviews/books/${bookId}/my-review`)
-      if (userReviewResponse.data) {
-        userRating = userReviewResponse.data.rating || 0
-        userReviewId = userReviewResponse.data.reviewId || null
-        reviewText = userReviewResponse.data.reviewText || null
+      reviewStats = stats
+      if (myReview) {
+        userRating = myReview.rating || 0
+        userReviewId = myReview.reviewId || null
+        reviewText = myReview.reviewText || null
       }
-    } catch (userReviewError: any) {
-      if (userReviewError.response && userReviewError.response.status !== 404) {
-        console.warn(
-          `Could not fetch user review for book ${bookId}: ${userReviewError.response.status}`,
-        )
-      }
+    } catch (error) {
+      console.warn(`Could not fetch review details for book ${bookId}:`, error)
     }
+    
     return { reviewStats, userRating, userReviewId, reviewText }
   }
 

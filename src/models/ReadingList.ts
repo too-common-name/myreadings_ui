@@ -1,8 +1,11 @@
-import type { Book } from './Book'
-
 export interface ReadingList {
-  books: Book[]
-  description: string
-  name: string
   readingListId: string
+  name: string
+  description: string
+  books: string[]
+}
+
+export interface ReadingListInput {
+  name: string
+  description: string
 }

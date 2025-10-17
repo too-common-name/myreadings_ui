@@ -112,36 +112,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import instance from '@/utils/axiosInstance'
-import { useBookDataFetcher } from '@/composables/useBookDataFetcher'
-import type { ReadingList } from '@/models/ReadingList'
-import type { UiTheme } from '@/models/UiTheme'
 import { useKeycloak } from '@josempgon/vue-keycloak'
+import type { User } from '@/models/User'
+import type { ReadingList } from '@/models/ReadingList'
+import type { ReviewWithBookTitle } from '@/models/Review'
+import { userService, reviewService, readingListService, bookService } from '@/services/serviceFactory'
 
 const { keycloak } = useKeycloak()
 
-interface UserResponseDTO {
-  userId: string
-  firstName: string
-  lastName: string
-  username: string
-  email: string
-  themePreference: UiTheme
-}
-
-interface UserReviewSummary {
-  reviewId: string
-  bookId: string
-  bookTitle: string
-  rating: number
-  createdAt: string
-}
-
-const user = ref<UserResponseDTO | null>(null)
+const user = ref<User | null>(null)
 const loadingUser = ref(false)
 const errorFetchingUser = ref(false)
 
-const recentReviews = ref<UserReviewSummary[]>([])
+const recentReviews = ref<ReviewWithBookTitle[]>([])
 const loadingReviews = ref(false)
 const errorFetchingReviews = ref(false)
 
@@ -150,8 +133,6 @@ const loadingReadingLists = ref(false)
 const errorFetchingReadingLists = ref(false)
 
 const currentUserId = computed(() => keycloak.value?.subject)
-
-const { fetchBookBaseInfo } = useBookDataFetcher()
 
 const userInitials = computed(() => {
   if (user.value) {
@@ -163,17 +144,11 @@ const userInitials = computed(() => {
 })
 
 const fetchUserData = async () => {
-  if (!currentUserId.value) {
-    console.warn('User ID is not available. Cannot fetch profile data.')
-    errorFetchingUser.value = true
-    return
-  }
-
+  if (!currentUserId.value) return
   loadingUser.value = true
   errorFetchingUser.value = false
   try {
-    const response = await instance.get(`/api/v1/users/${currentUserId.value}`)
-    user.value = response.data
+    user.value = await userService.getUserProfile(currentUserId.value)
   } catch (error) {
     console.error('Error fetching user data:', error)
     errorFetchingUser.value = true
@@ -183,36 +158,25 @@ const fetchUserData = async () => {
 }
 
 const fetchRecentReviews = async () => {
-  if (!currentUserId.value) {
-    console.warn('User ID is not available. Cannot fetch reviews.')
-    errorFetchingReviews.value = true
-    return
-  }
-
+  if (!currentUserId.value) return
   loadingReviews.value = true
   errorFetchingReviews.value = false
   try {
-    const response = await instance.get(`/api/v1/reviews/users/${currentUserId.value}`)
-    const reviewsData = response.data
-
-    reviewsData.sort(
-      (a: any, b: any) =>
-        new Date(b.publicationDate).getTime() - new Date(a.publicationDate).getTime(),
+    const reviewsData = await reviewService.getReviewsByUser(currentUserId.value)
+    
+    const sortedReviews = [...reviewsData].sort(
+      (a, b) => new Date(b.publicationDate).getTime() - new Date(a.publicationDate).getTime()
     )
-    const topReviews = reviewsData.slice(0, 5)
+    const topReviews = sortedReviews.slice(0, 5)
 
-    const reviewsWithDetailsPromises = topReviews.map(async (review: any) => {
-      let bookTitle = 'Unknown Book'
-      const bookBaseInfo = await fetchBookBaseInfo(review.bookId)
-      if (bookBaseInfo) {
-        bookTitle = bookBaseInfo.title
-      }
+    const reviewsWithDetailsPromises = topReviews.map(async (review) => {
+      const bookInfo = await bookService.getBookById(review.bookId)
       return {
         reviewId: review.reviewId,
         bookId: review.bookId,
-        bookTitle: bookTitle,
+        bookTitle: bookInfo?.title ?? 'Unknown Book',
         rating: review.rating,
-        createdAt: review.publicationDate,
+        publicationDate: review.publicationDate,
       }
     })
 
@@ -230,8 +194,7 @@ const fetchReadingListsForProfile = async () => {
   loadingReadingLists.value = true
   errorFetchingReadingLists.value = false
   try {
-    const response = await instance.get('/api/v1/readinglists')
-    readingLists.value = response.data ?? []
+    readingLists.value = await readingListService.getMyReadingLists()
   } catch (error) {
     console.error('Error fetching reading lists for ProfileView:', error)
     errorFetchingReadingLists.value = true
@@ -241,9 +204,16 @@ const fetchReadingListsForProfile = async () => {
 }
 
 onMounted(() => {
-  fetchUserData()
-  fetchRecentReviews()
-  fetchReadingListsForProfile()
+  if (currentUserId.value) {
+    fetchUserData()
+    fetchRecentReviews()
+    fetchReadingListsForProfile()
+  } else {
+    console.warn('User ID not available on mount.')
+    errorFetchingUser.value = true
+    errorFetchingReviews.value = true
+    errorFetchingReadingLists.value = true
+  }
 })
 </script>
 
