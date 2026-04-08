@@ -29,15 +29,16 @@ app.get('/config.js', (req, res) => {
 };`)
 })
 
-app.use('/api/v1/users', createProxyMiddleware({
+app.use(createProxyMiddleware({
   target: USER_SERVICE,
   changeOrigin: true,
-  pathRewrite: { '^/api/v1/users': '/api/v1/users' },
+  pathFilter: '/api/v1/users',
 }))
 
-app.use('/api', createProxyMiddleware({
+app.use(createProxyMiddleware({
   target: APP_SERVICE,
   changeOrigin: true,
+  pathFilter: '/api',
 }))
 
 app.use(express.static(path.join(__dirname, 'public')))
