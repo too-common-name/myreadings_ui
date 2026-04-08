@@ -6,6 +6,8 @@
     "cypress.config.*",
     "nightwatch.conf.*",
     "playwright.config.*",
+  ],
+  "exclude": [
     "eslint.config.*"
   ],
   "compilerOptions": {

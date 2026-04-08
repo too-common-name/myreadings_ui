@@ -168,7 +168,7 @@ import { ref, watch, computed } from 'vue'
 import { useDisplay } from 'vuetify'
 import type { Book } from '@/models/Book'
 import type { ReadingList } from '@/models/ReadingList'
-import type { ReviewStats } from '@/models/ReviewStats'
+import type { ReviewStats } from '@/models/Review'
 import ReadingListSelectBox from './ReadingListSelectBox.vue'
 
 const props = defineProps({
