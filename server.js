@@ -12,6 +12,10 @@ const KC_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID || 'myreadings-client'
 
 const app = express()
 
+app.get('/healthz', (_req, res) => {
+  res.status(200).json({ status: 'UP' })
+})
+
 app.get('/config.js', (req, res) => {
   const host = req.headers.host || ''
   const appsIdx = host.indexOf('.apps.')
