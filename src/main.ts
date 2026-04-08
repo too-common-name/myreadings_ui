@@ -1,4 +1,5 @@
 import './assets/main.css'
+import config from './utils/config'
 import { vueKeycloak } from '@josempgon/vue-keycloak'
 
 import 'vuetify/styles'
@@ -19,9 +20,9 @@ const initApp = async () => {
 
   await vueKeycloak.install(app, {
     config: {
-      url: import.meta.env.VITE_VUE_APP_KEYCLOAK_URL,
-      realm: import.meta.env.VITE_VUE_APP_KEYCLOAK_REALM,
-      clientId: import.meta.env.VITE_VUE_APP_KEYCLOAK_CLIENT_ID,
+      url: config.keycloakUrl,
+      realm: config.keycloakRealm,
+      clientId: config.keycloakClientId,
     },
   })
 

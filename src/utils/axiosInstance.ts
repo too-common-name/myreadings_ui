@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { getToken } from '@josempgon/vue-keycloak'
+import config from './config'
 
-const baseURL = import.meta.env.VITE_API_URL
+const baseURL = config.apiUrl
 const instance = axios.create({ baseURL })
 
 instance.interceptors.request.use(

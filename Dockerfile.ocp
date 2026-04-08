@@ -1,0 +1,14 @@
+FROM docker.io/library/node:18-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build:docker
+
+FROM docker.io/library/node:18-alpine
+RUN npm install -g serve@14
+WORKDIR /app
+COPY --from=build /app/dist .
+EXPOSE 8080
+USER 1001
+CMD ["serve", "-s", ".", "-l", "8080"]

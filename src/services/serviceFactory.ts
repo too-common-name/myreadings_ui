@@ -11,7 +11,9 @@ import { RestReadingListService } from './RestReadingListService'
 import { RestReviewService } from './RestReviewService'
 import { RestUserService } from './RestUserService'
 
-const strategy = import.meta.env.VITE_API_STRATEGY?.toUpperCase()
+import config from '../utils/config'
+
+const strategy = config.apiStrategy?.toUpperCase()
 
 let bookService: IBookService
 let readingListService: IReadingListService

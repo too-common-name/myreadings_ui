@@ -1,8 +1,9 @@
 import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/client'
 import { SetContextLink } from '@apollo/client/link/context'
 import { getToken } from '@josempgon/vue-keycloak'
+import config from './config'
 
-const baseURL = import.meta.env.VITE_API_URL
+const baseURL = config.apiUrl
 const httpLink = new HttpLink({
   uri: `${baseURL}graphql`,
 })
