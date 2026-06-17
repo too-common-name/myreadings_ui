@@ -2,7 +2,6 @@ import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/clien
 import { SetContextLink } from '@apollo/client/link/context'
 import { getToken } from '@josempgon/vue-keycloak'
 import config from './config'
-import { generateTraceparent } from './tracing'
 
 const baseURL = config.apiUrl
 const httpLink = new HttpLink({
@@ -16,7 +15,6 @@ const authLink = new SetContextLink(async ({ headers }, _) => {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : '',
-      traceparent: generateTraceparent(),
     },
   }
 })

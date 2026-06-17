@@ -82,3 +82,4 @@ The build artifacts will be generated in the `dist/` directory.
 - **Format code with Prettier**:
 
       npm run format
+
