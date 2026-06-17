@@ -11,6 +11,9 @@ const sdk = new NodeSDK({
     getNodeAutoInstrumentations({
       '@opentelemetry/instrumentation-fs': { enabled: false },
       '@opentelemetry/instrumentation-dns': { enabled: false },
+      '@opentelemetry/instrumentation-express': { enabled: false },
+      '@opentelemetry/instrumentation-router': { enabled: false },
+      '@opentelemetry/instrumentation-net': { enabled: false },
     }),
   ],
 })
