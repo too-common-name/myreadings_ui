@@ -6,6 +6,9 @@ const PORT = process.env.PORT || 8080
 const NAMESPACE = process.env.NAMESPACE || 'myreadings-dev'
 const APP_SERVICE = process.env.APP_SERVICE_URL || 'http://myreadings-app:8081'
 const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://myreadings-user-service:8083'
+const CATALOG_SERVICE = process.env.CATALOG_SERVICE_URL
+const READINGLIST_SERVICE = process.env.READINGLIST_SERVICE_URL
+const REVIEW_SERVICE = process.env.REVIEW_SERVICE_URL
 const KC_SERVICE_NAME = process.env.KC_ROUTE_NAME || `myreadings-keycloak-${NAMESPACE}`
 const KC_REALM = process.env.KEYCLOAK_REALM || 'my-readings'
 const KC_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID || 'myreadings-client'
@@ -38,6 +41,33 @@ app.use(createProxyMiddleware({
   changeOrigin: true,
   pathFilter: '/api/v1/users',
 }))
+
+if (CATALOG_SERVICE) {
+  app.use(createProxyMiddleware({
+    target: CATALOG_SERVICE,
+    changeOrigin: true,
+    pathFilter: '/api/v1/books',
+  }))
+  console.log(`  proxy /api/v1/books -> ${CATALOG_SERVICE}`)
+}
+
+if (READINGLIST_SERVICE) {
+  app.use(createProxyMiddleware({
+    target: READINGLIST_SERVICE,
+    changeOrigin: true,
+    pathFilter: '/api/v1/readinglists',
+  }))
+  console.log(`  proxy /api/v1/readinglists -> ${READINGLIST_SERVICE}`)
+}
+
+if (REVIEW_SERVICE) {
+  app.use(createProxyMiddleware({
+    target: REVIEW_SERVICE,
+    changeOrigin: true,
+    pathFilter: '/api/v1/reviews',
+  }))
+  console.log(`  proxy /api/v1/reviews -> ${REVIEW_SERVICE}`)
+}
 
 app.use(createProxyMiddleware({
   target: APP_SERVICE,
