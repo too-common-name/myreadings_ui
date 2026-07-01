@@ -1,17 +1,41 @@
-/**
- * Lightweight W3C Trace Context propagation for browser → backend correlation.
- * Generates a traceparent header per request so Quarkus OTel continues the trace.
- * Format: {version}-{trace-id}-{parent-id}-{trace-flags}
- */
+import { WebTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-web'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { resourceFromAttributes } from '@opentelemetry/resources'
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
+import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request'
 
-function randomHex(bytes: number): string {
-  const arr = new Uint8Array(bytes)
-  crypto.getRandomValues(arr)
-  return Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('')
-}
+let initialized = false
 
-export function generateTraceparent(): string {
-  const traceId = randomHex(16)
-  const parentId = randomHex(8)
-  return `00-${traceId}-${parentId}-01`
+export function initTracing(otlpEndpoint: string) {
+  if (initialized) return
+  initialized = true
+
+  try {
+    const exporter = new OTLPTraceExporter({ url: otlpEndpoint })
+
+    const provider = new WebTracerProvider({
+      resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: 'myreadings-ui' }),
+      spanProcessors: [new BatchSpanProcessor(exporter)],
+    })
+
+    provider.register()
+
+    const xhrInstrumentation = new XMLHttpRequestInstrumentation({
+      propagateTraceHeaderCorsUrls: [/\/api\//],
+      ignoreUrls: [/\/realms\//, /\/openid-connect\//],
+      applyCustomAttributesOnSpan: (span, xhr) => {
+        try {
+          const url = new URL(xhr.responseURL || '', globalThis.location?.href)
+          span.updateName(url.pathname)
+          span.setAttribute('page.route', globalThis.location?.pathname || '/')
+        } catch { /* keep default name */ }
+      },
+    })
+    xhrInstrumentation.setTracerProvider(provider)
+    xhrInstrumentation.enable()
+
+    console.log('[OTel] Browser tracing initialized, exporting to', otlpEndpoint)
+  } catch (e) {
+    console.error('[OTel] Failed to initialize tracing:', e)
+  }
 }

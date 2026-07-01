@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { reviewService, readingListService } from '@/services/serviceFactory'
 import type { Book, BookWithDetails } from '@/models/Book'
+import type { ReadingList } from '@/models/ReadingList'
 import type { ReviewStats } from '@/models/Review'
 
 export function useBookDialog() {
@@ -8,6 +9,8 @@ export function useBookDialog() {
   const selectedBookForDetails = ref<BookWithDetails | null>(null)
   const userRatingForSelectedBook = ref(0)
   const bookReadingListIdForSelectedBook = ref<string | null>(null)
+  const readingLists = ref<ReadingList[]>([])
+  let readingListsLoaded = false
 
   const openBookDialog = async (
     bookBaseInfo: Book,
@@ -31,12 +34,37 @@ export function useBookDialog() {
     showBookDetailsDialog.value = true
   }
 
+  const fetchAndOpenBookDialog = async (book: Book) => {
+    const [listInfo, stats, myReview, lists] = await Promise.all([
+      readingListService.getReadingListContainingBook(book.bookId),
+      reviewService.getReviewStats(book.bookId),
+      reviewService.getMyReviewForBook(book.bookId),
+      readingListsLoaded
+        ? readingLists.value
+        : readingListService.getMyReadingLists(),
+    ])
+
+    if (!readingListsLoaded) {
+      readingLists.value = lists
+      readingListsLoaded = true
+    }
+
+    await openBookDialog(
+      book,
+      stats,
+      myReview?.rating ?? 0,
+      myReview?.reviewId ?? null,
+      myReview?.reviewText ?? null,
+      listInfo?.readingListId ?? null,
+    )
+  }
+
   const handleConfirmChanges = async (
     payload: { bookId: string; newRating?: number; selectedListId?: string | null },
     onBookUpdatedInList?: (updatedBook: BookWithDetails) => void,
     onBookMoved?: () => Promise<void>,
   ) => {
-    let needsDialogRefresh = false
+    let changed = false
 
     if (payload.newRating !== undefined && payload.newRating !== userRatingForSelectedBook.value) {
       try {
@@ -49,8 +77,10 @@ export function useBookDialog() {
 
         if (selectedBookForDetails.value) {
           selectedBookForDetails.value.userReviewId = newReview.reviewId
+          selectedBookForDetails.value.userRating = payload.newRating
+          userRatingForSelectedBook.value = payload.newRating
         }
-        needsDialogRefresh = true
+        changed = true
       } catch (error) {
         console.error('Error updating/creating rating:', error)
       }
@@ -66,11 +96,17 @@ export function useBookDialog() {
             payload.bookId,
             bookReadingListIdForSelectedBook.value,
             payload.selectedListId!,
-          ) 
+          )
         } else {
           await readingListService.addBookToReadingList(payload.selectedListId!, payload.bookId)
         }
-        needsDialogRefresh = true
+
+        if (selectedBookForDetails.value) {
+          selectedBookForDetails.value.readingListId = payload.selectedListId!
+        }
+        bookReadingListIdForSelectedBook.value = payload.selectedListId!
+        changed = true
+
         if (onBookMoved) {
           await onBookMoved()
         }
@@ -79,50 +115,11 @@ export function useBookDialog() {
       }
     }
 
-    if (needsDialogRefresh && payload.bookId && selectedBookForDetails.value) {
-      const { reviewStats, userRating, userReviewId, reviewText } =
-        await fetchBookUserAndReviewDetails(payload.bookId)
-
-      selectedBookForDetails.value.reviewStats = reviewStats
-      selectedBookForDetails.value.userRating = userRating
-      selectedBookForDetails.value.userReviewId = userReviewId
-      selectedBookForDetails.value.reviewText = reviewText
-      selectedBookForDetails.value.readingListId = payload.selectedListId!
-
-      userRatingForSelectedBook.value = userRating
-      bookReadingListIdForSelectedBook.value = payload.selectedListId!
-
-      if (onBookUpdatedInList) {
-        onBookUpdatedInList(selectedBookForDetails.value)
-      }
+    if (changed && selectedBookForDetails.value && onBookUpdatedInList) {
+      onBookUpdatedInList(selectedBookForDetails.value)
     }
 
     showBookDetailsDialog.value = false
-  }
-
-  async function fetchBookUserAndReviewDetails(bookId: string) {
-    let reviewStats: ReviewStats | null = null
-    let userRating = 0
-    let userReviewId: string | null = null
-    let reviewText: string | null = null
-
-try {
-      const [stats, myReview] = await Promise.all([
-        reviewService.getReviewStats(bookId),
-        reviewService.getMyReviewForBook(bookId),
-      ])
-
-      reviewStats = stats
-      if (myReview) {
-        userRating = myReview.rating || 0
-        userReviewId = myReview.reviewId || null
-        reviewText = myReview.reviewText || null
-      }
-    } catch (error) {
-      console.warn(`Could not fetch review details for book ${bookId}:`, error)
-    }
-    
-    return { reviewStats, userRating, userReviewId, reviewText }
   }
 
   return {
@@ -130,7 +127,9 @@ try {
     selectedBookForDetails,
     userRatingForSelectedBook,
     bookReadingListIdForSelectedBook,
+    readingLists,
     openBookDialog,
+    fetchAndOpenBookDialog,
     handleConfirmChanges,
   }
 }

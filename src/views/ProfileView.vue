@@ -169,18 +169,17 @@ const fetchRecentReviews = async () => {
     )
     const topReviews = sortedReviews.slice(0, 5)
 
-    const reviewsWithDetailsPromises = topReviews.map(async (review) => {
-      const bookInfo = await bookService.getBookById(review.bookId)
-      return {
-        reviewId: review.reviewId,
-        bookId: review.bookId,
-        bookTitle: bookInfo?.title ?? 'Unknown Book',
-        rating: review.rating,
-        publicationDate: review.publicationDate,
-      }
-    })
+    const bookIds = [...new Set(topReviews.map((r) => r.bookId))]
+    const books = await bookService.getBooksByIds(bookIds)
+    const bookMap = new Map(books.map((b) => [b.bookId, b]))
 
-    recentReviews.value = await Promise.all(reviewsWithDetailsPromises)
+    recentReviews.value = topReviews.map((review) => ({
+      reviewId: review.reviewId,
+      bookId: review.bookId,
+      bookTitle: bookMap.get(review.bookId)?.title ?? 'Unknown Book',
+      rating: review.rating,
+      publicationDate: review.publicationDate,
+    }))
   } catch (error) {
     console.error('Error fetching recent reviews:', error)
     errorFetchingReviews.value = true

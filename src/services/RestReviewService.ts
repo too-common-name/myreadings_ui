@@ -27,6 +27,16 @@ export class RestReviewService implements IReviewService {
     }
   }
 
+  public async getReviewStatsBatch(bookIds: string[]): Promise<ReviewStats[]> {
+    const response = await axiosInstance.post('/api/v1/reviews/books/batch/stats', bookIds)
+    return response.data ?? []
+  }
+
+  public async getMyReviewsForBooks(bookIds: string[]): Promise<Review[]> {
+    const response = await axiosInstance.post('/api/v1/reviews/books/batch/my-reviews', bookIds)
+    return response.data ?? []
+  }
+
   public async getReviewsByUser(userId: string): Promise<Review[]> {
     const response = await axiosInstance.get(`/api/v1/reviews/users/${userId}`)
     return response.data ?? []

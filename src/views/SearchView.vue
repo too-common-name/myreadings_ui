@@ -47,7 +47,7 @@
               :coverUrl="getCoverUrl(book, 'L')"
               :title="book.title"
               :description="book.description"
-              @bookCardClicked="handleBookClick(book)"
+              @bookCardClicked="fetchAndOpenBookDialog(book)"
             />
           </v-col>
         </v-row>
@@ -56,7 +56,7 @@
       <v-col v-else cols="12">
         <v-list>
           <template v-for="(book, index) in searchResults" :key="book.bookId">
-            <v-list-item @click="handleBookClick(book)" link>
+            <v-list-item @click="fetchAndOpenBookDialog(book)" link>
               <template v-slot:prepend>
                 <v-img
                   :src="getCoverUrl(book, 'M')"
@@ -100,26 +100,25 @@
       :review-stats="selectedBookForDetails?.reviewStats"
       :user-rating="userRatingForSelectedBook"
       :book-reading-list-id="bookReadingListIdForSelectedBook"
-      @confirm-changes="confirmBookDialogChanges"
+      @confirm-changes="handleConfirmChanges"
     />
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useDisplay } from 'vuetify'
-import type { Book, BookWithDetails } from '@/models/Book'
-import type { ReadingList } from '@/models/ReadingList'
+import type { Book } from '@/models/Book'
 import BookCard from '@/components/BookCard.vue'
 import BookDialog from '@/components/BookDialog.vue'
 import { useBookDialog } from '@/composables/useBookDialog'
 import { getCoverUrl } from '@/utils/coverUtils'
-import { bookService, readingListService, reviewService } from '@/services/serviceFactory'
+import { bookService } from '@/services/serviceFactory'
 
 const display = useDisplay()
 
 const searchQuery = ref('')
-const searchResults = ref<Book[]>([]) // Correct type is Book[]
+const searchResults = ref<Book[]>([])
 const loadingResults = ref(false)
 const hasSearched = ref(false)
 
@@ -128,14 +127,13 @@ const pageSize = 12
 const totalResults = ref(0)
 const totalPages = ref(0)
 
-const readingLists = ref<ReadingList[]>([])
-
 const {
   showBookDetailsDialog,
   selectedBookForDetails,
   userRatingForSelectedBook,
   bookReadingListIdForSelectedBook,
-  openBookDialog,
+  readingLists,
+  fetchAndOpenBookDialog,
   handleConfirmChanges,
 } = useBookDialog()
 
@@ -181,48 +179,6 @@ const clearSearch = () => {
   totalResults.value = 0
   totalPages.value = 0
 }
-
-async function handleBookClick(book: Book) {
-  const [listInfo, stats, myReview] = await Promise.all([
-    readingListService.getReadingListContainingBook(book.bookId),
-    reviewService.getReviewStats(book.bookId),
-    reviewService.getMyReviewForBook(book.bookId),
-  ])
-
-  const bookWithDetails: BookWithDetails = {
-    ...book,
-    reviewStats: stats,
-    userRating: myReview?.rating ?? 0,
-    userReviewId: myReview?.reviewId ?? null,
-    reviewText: myReview?.reviewText ?? null,
-    readingListId: listInfo?.readingListId ?? null,
-  }
-
-  await openBookDialog(
-    bookWithDetails,
-    bookWithDetails.reviewStats,
-    bookWithDetails.userRating,
-    bookWithDetails.userReviewId,
-    bookWithDetails.reviewText,
-    bookWithDetails.readingListId,
-  )
-}
-
-const confirmBookDialogChanges = async (payload: {
-  bookId: string
-  newRating?: number
-  selectedListId?: string | null
-}) => {
-  await handleConfirmChanges(payload, () => {})
-}
-
-onMounted(async () => {
-  try {
-    readingLists.value = await readingListService.getMyReadingLists()
-  } catch (error) {
-    console.error('Error fetching reading lists for BookDialog:', error)
-  }
-})
 
 watch(searchQuery, (newQuery, oldQuery) => {
   if (newQuery.trim() !== oldQuery.trim()) {

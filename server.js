@@ -9,6 +9,7 @@ const USER_SERVICE = process.env.USER_SERVICE_URL || 'http://myreadings-user-ser
 const CATALOG_SERVICE = process.env.CATALOG_SERVICE_URL
 const READINGLIST_SERVICE = process.env.READINGLIST_SERVICE_URL
 const REVIEW_SERVICE = process.env.REVIEW_SERVICE_URL
+const OTEL_COLLECTOR = process.env.OTEL_COLLECTOR_URL || 'http://myreadings-collector:4318'
 const KC_SERVICE_NAME = process.env.KC_ROUTE_NAME || `myreadings-keycloak-${NAMESPACE}`
 const KC_REALM = process.env.KEYCLOAK_REALM || 'my-readings'
 const KC_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID || 'myreadings-client'
@@ -73,6 +74,13 @@ app.use(createProxyMiddleware({
   target: APP_SERVICE,
   changeOrigin: true,
   pathFilter: '/api',
+}))
+
+app.use(createProxyMiddleware({
+  target: OTEL_COLLECTOR,
+  changeOrigin: true,
+  pathFilter: '/otlp',
+  pathRewrite: { '^/otlp': '' },
 }))
 
 app.use(express.static(path.join(__dirname, 'public')))

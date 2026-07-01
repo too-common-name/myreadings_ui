@@ -6,4 +6,5 @@ export interface IBookService {
   searchBooks(query: string, page: number, size: number): Promise<PagedResponse<Book>>;
   getBooksInReadingListWithDetails(readingListId: string): Promise<BookWithDetails[]>;
   getBookById(bookId: string): Promise<Book | null>
+  getBooksByIds(bookIds: string[]): Promise<Book[]>
 }

@@ -1,14 +1,10 @@
 import type { IBookService } from './IBookService'
 import type { Book, PagedResponse, BookWithDetails } from '@/models/Book'
-import type { IReadingListService } from './IReadingListService'
 import type { IReviewService } from './IReviewService'
 import axiosInstance from '@/utils/axiosInstance'
 
 export class RestBookService implements IBookService {
-  public constructor(
-    private readingListService: IReadingListService,
-    private reviewService: IReviewService,
-  ) {}
+  public constructor(private reviewService: IReviewService) {}
 
     public async getBookById(bookId: string): Promise<Book | null> {
     try {
@@ -22,6 +18,12 @@ export class RestBookService implements IBookService {
     }
   }
   
+  public async getBooksByIds(bookIds: string[]): Promise<Book[]> {
+    if (bookIds.length === 0) return []
+    const response = await axiosInstance.post('/api/v1/books/batch', bookIds)
+    return response.data ?? []
+  }
+
   public async getNewReleases(limit: number): Promise<Book[]> {
     const response = await axiosInstance.get('/api/v1/books', {
       params: { sort: 'publicationdate', order: 'desc', limit },
@@ -46,24 +48,27 @@ export class RestBookService implements IBookService {
   ): Promise<BookWithDetails[]> {
     const booksResponse = await axiosInstance.get(`/api/v1/readinglists/${readingListId}/books`)
     const booksData: Book[] = booksResponse.data ?? []
+    if (booksData.length === 0) return []
 
-    const booksWithDetailsPromises = booksData.map(async (book) => {
-      const [listInfo, stats, myReview] = await Promise.all([
-        this.readingListService.getReadingListContainingBook(book.bookId),
-        this.reviewService.getReviewStats(book.bookId),
-        this.reviewService.getMyReviewForBook(book.bookId),
-      ])
+    const bookIds = booksData.map((b) => b.bookId)
+    const [statsList, reviewsList] = await Promise.all([
+      this.reviewService.getReviewStatsBatch(bookIds),
+      this.reviewService.getMyReviewsForBooks(bookIds),
+    ])
 
+    const statsMap = new Map(statsList.map((s) => [s.bookId, s]))
+    const reviewsMap = new Map(reviewsList.map((r) => [r.bookId, r]))
+
+    return booksData.map((book) => {
+      const review = reviewsMap.get(book.bookId)
       return {
         ...book,
-        reviewStats: stats,
-        userRating: myReview?.rating ?? 0,
-        userReviewId: myReview?.reviewId ?? null,
-        reviewText: myReview?.reviewText ?? null,
-        readingListId: listInfo?.readingListId ?? null,
+        reviewStats: statsMap.get(book.bookId) ?? null,
+        userRating: review?.rating ?? 0,
+        userReviewId: review?.reviewId ?? null,
+        reviewText: review?.reviewText ?? null,
+        readingListId,
       }
     })
-
-    return Promise.all(booksWithDetailsPromises)
   }
 }

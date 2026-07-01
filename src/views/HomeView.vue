@@ -9,7 +9,7 @@
           :coverUrl="getCoverUrl(book, 'L')"
           :title="book.title"
           :description="book.description"
-          @bookCardClicked="bookCardClicked(book)"
+          @bookCardClicked="fetchAndOpenBookDialog(book)"
         />
       </swiper-slide>
     </swiper-container>
@@ -24,7 +24,7 @@
           :coverUrl="getCoverUrl(book, 'L')"
           :title="book.title"
           :description="book.description"
-          @bookCardClicked="bookCardClicked(book)"
+          @bookCardClicked="fetchAndOpenBookDialog(book)"
         />
       </swiper-slide>
     </swiper-container>
@@ -45,24 +45,23 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import type { Book, BookWithDetails } from '@/models/Book'
-import type { ReadingList } from '@/models/ReadingList'
+import type { Book } from '@/models/Book'
 import BookCard from '@/components/BookCard.vue'
 import BookDialog from '@/components/BookDialog.vue'
 import { getCoverUrl } from '@/utils/coverUtils'
 import { useBookDialog } from '@/composables/useBookDialog'
-import { bookService, readingListService, reviewService } from '@/services/serviceFactory'
+import { bookService } from '@/services/serviceFactory'
 
 const recentBooks = ref<Book[]>([])
 const recommendedBooks = ref<Book[]>([])
-const readingLists = ref<ReadingList[]>([])
 
 const {
   showBookDetailsDialog,
   selectedBookForDetails,
   userRatingForSelectedBook,
   bookReadingListIdForSelectedBook,
-  openBookDialog,
+  readingLists,
+  fetchAndOpenBookDialog,
   handleConfirmChanges,
 } = useBookDialog()
 
@@ -76,44 +75,16 @@ const swiperBreakpoints = {
 
 onMounted(async () => {
   try {
-    const [recent, recommended, lists] = await Promise.all([
+    const [recent, recommended] = await Promise.all([
       bookService.getNewReleases(10),
       bookService.getRecommended(6),
-      readingListService.getMyReadingLists(),
     ])
     recentBooks.value = recent
     recommendedBooks.value = recommended
-    readingLists.value = lists
   } catch (error) {
     console.error('Error fetching initial data for Home:', error)
   }
 })
-
-async function bookCardClicked(book: Book) {
-  const [listInfo, stats, myReview] = await Promise.all([
-    readingListService.getReadingListContainingBook(book.bookId),
-    reviewService.getReviewStats(book.bookId),
-    reviewService.getMyReviewForBook(book.bookId),
-  ])
-
-  const bookWithDetails: BookWithDetails = {
-    ...book,
-    reviewStats: stats,
-    userRating: myReview?.rating ?? 0,
-    userReviewId: myReview?.reviewId ?? null,
-    reviewText: myReview?.reviewText ?? null,
-    readingListId: listInfo?.readingListId ?? null,
-  }
-
-  await openBookDialog(
-    bookWithDetails,
-    bookWithDetails.reviewStats,
-    bookWithDetails.userRating,
-    bookWithDetails.userReviewId,
-    bookWithDetails.reviewText,
-    bookWithDetails.readingListId,
-  )
-}
 </script>
 
 <style scoped>

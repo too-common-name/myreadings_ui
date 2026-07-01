@@ -14,6 +14,7 @@ export const config = {
   keycloakRealm: get('VITE_VUE_APP_KEYCLOAK_REALM'),
   keycloakClientId: get('VITE_VUE_APP_KEYCLOAK_CLIENT_ID'),
   apiStrategy: get('VITE_API_STRATEGY'),
+  otelEndpoint: get('VITE_OTEL_ENDPOINT') || '/otlp/v1/traces',
 }
 
 export default config

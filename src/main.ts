@@ -1,6 +1,9 @@
 import './assets/main.css'
 import config from './utils/config'
+import { initTracing } from './utils/tracing'
 import { vueKeycloak } from '@josempgon/vue-keycloak'
+
+initTracing(config.otelEndpoint)
 
 import 'vuetify/styles'
 import { createVuetify, type ThemeDefinition } from 'vuetify'

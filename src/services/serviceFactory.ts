@@ -24,12 +24,12 @@ if (strategy === 'GQL') {
   readingListService = new GqlReadingListService()
   reviewService = new GqlReviewService()
   userService = new GqlUserService()
-  bookService = new GqlBookService(readingListService, reviewService)
+  bookService = new GqlBookService(reviewService)
 } else {
   readingListService = new RestReadingListService()
   reviewService = new RestReviewService()
   userService = new RestUserService()
-  bookService = new RestBookService(readingListService, reviewService)
+  bookService = new RestBookService(reviewService)
 }
 
 export { bookService, readingListService, reviewService, userService }

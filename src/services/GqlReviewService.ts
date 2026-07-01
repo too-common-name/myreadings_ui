@@ -78,6 +78,16 @@ export class GqlReviewService implements IReviewService {
     return data?.myReviewForBook ?? null
   }
 
+  public async getReviewStatsBatch(bookIds: string[]): Promise<ReviewStats[]> {
+    const results = await Promise.all(bookIds.map(id => this.getReviewStats(id)))
+    return results.filter((s): s is ReviewStats => s !== null)
+  }
+
+  public async getMyReviewsForBooks(bookIds: string[]): Promise<Review[]> {
+    const results = await Promise.all(bookIds.map(id => this.getMyReviewForBook(id)))
+    return results.filter((r): r is Review => r !== null)
+  }
+
   public async getReviewsByUser(userId: string): Promise<Review[]> {
     const { data } = await apolloClient.query<ReviewsByUserQueryResult>({
       query: GET_REVIEWS_BY_USER_QUERY,
